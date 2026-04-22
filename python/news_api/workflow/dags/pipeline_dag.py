@@ -10,37 +10,19 @@ project_root = os.path.dirname(airflow_folder)
 sys.path.append(project_root)
 sys.path.append(os.path.join(project_root, 'venv/lib/python3.12/site-packages'))
 
-from airflow.decorators import dag, task
+from airflow import DAG
+from airflow.providers.standard.operators.python import PythonOperator
 from datetime import datetime, timedelta
-from extract import extract_news
-from transform import transform_news
-from load import load_news
+from main import main
 
-
-@dag(
+with DAG(
     dag_id="news_pipeline",
     schedule='@daily',
     start_date=datetime(2026, 4, 16),
     catchup=False,
     max_active_runs=1
-)
-def run_pipeline():
-    @task
-    def run_extract():
-        return extract_news()
-
-    @task
-    def run_transform(articles):
-        return transform_news(articles)
-
-    @task
-    def run_load(transformed_data):
-        return load_news(transformed_data)
-
-    raw_data = run_extract()
-    clean_data = run_transform(raw_data)
-    run_load(clean_data)
-
-run_pipeline()
-
-
+) as dag:
+    task_news = PythonOperator(
+        task_id='news_pipeline',
+        python_callable=main
+        )
