@@ -36,13 +36,13 @@ def cliffe_stocks_dag():
         raw_df = pd.DataFrame(data)
         
         # Convert to json
-        raw_data = json.load(raw_df.to_json(orient="records"))
+        raw_data = json.loads(raw_df.to_json(orient="records"))
 
         return raw_data
 
     @task()
     def transform(raw_data):
-        df_transform = extract()
+        df_transform = pd.DataFrame(raw_data)
         
         # Rename date column
         df_transform = df_transform.rename(columns={"from_":"date"})
