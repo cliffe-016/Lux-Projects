@@ -1,0 +1,6 @@
+Text Analyzer Create functions to:
+Count words in text file
+Count characters
+Find most common word
+Count lines
+Handle file errors
