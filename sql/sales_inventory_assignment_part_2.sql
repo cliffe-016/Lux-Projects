@@ -600,12 +600,12 @@ WHERE registration_date < (
 	)
 -- 58. Which products have a price higher than the average price within their own category?
 SELECT product_name 
-FROM "assignment".products  
+FROM "assignment".products p1  
 WHERE price > (
-	SELECT AVG(price) AS avg_price
-	FROM "assignment".products
-	)
-GROUP BY category, product_name;
+	SELECT AVG(p2.price) AS avg_price
+	FROM "assignment".products p2
+	WHERE p2.category = p1.category
+	);
 
 
 -- 59. Which customers have spent more than the customer with ID = 10?
@@ -670,15 +670,16 @@ SELECT * FROM popular_products;
 -- 63. Create an intermediate result showing total sales per product category,
 --     then determine which category generates the highest revenue.
 WITH category_qty AS(
-	SELECT p.category, COUNT(s.sale_id) AS sales_qty
+	SELECT p.category, sum(s.total_amount) AS total_sales
 	FROM "assignment".products p 
 		JOIN "assignment".sales s 
-			ON s.product_id = s.product_id
+			ON s.product_id = p.product_id
 	GROUP BY p.category 
 	),
 popular_category AS(
 	SELECT category
 	FROM category_qty 
+	ORDER BY total_sales DESC
 	LIMIT 1)	
 SELECT * FROM popular_category;	
 
@@ -911,8 +912,8 @@ FROM "assignment".customers c
 		ON c.customer_id = s.customer_id
 			JOIN "assignment".products p 
 				ON s.product_id = p.product_id
-GROUP BY c.customer_id, s.product_id  
-HAVING COUNT(p.category) > 1;
+GROUP BY c.customer_id 
+HAVING COUNT(DISTINCT p.category) > 1;
 
 -- 82. Which customers purchased products within 7 days of registering?
 SELECT CONCAT(c.first_name, ' ' , c.last_name) AS full_name
@@ -932,12 +933,11 @@ WHERE stock_quantity < (
 -- 84. Which customers purchased the same product more than once?
 SELECT full_name
 FROM(
-	SELECT CONCAT(c.first_name, ' ' , c.last_name) AS full_name, COUNT(s.product_id) AS count_products
+	SELECT CONCAT(c.first_name, ' ' , c.last_name) AS full_name, COUNT(s.sale_id ) AS count_products
 	FROM "assignment".customers c
 		JOIN "assignment".sales s
 			ON c.customer_id = s.customer_id
-	WHERE s.product_id = s.product_id 
-	GROUP BY c.customer_id  		
+	GROUP BY c.customer_id, s.product_id  		
 	)
 WHERE count_products > 1;
 
@@ -1008,21 +1008,21 @@ HAVING SUM(s.quantity_sold) > (
 -- 91. Which customers rank in the top 10% of spending?
 SELECT CONCAT(first_name, ' ' , last_name) AS full_name
 FROM 
-	(SELECT *, NTILE(10) OVER(ORDER BY SUM(s.total_amount) DESC) AS tiles
+	(SELECT c.first_name, c.last_name, NTILE(10) OVER(ORDER BY SUM(s.total_amount) DESC) AS tiles
 	FROM "assignment".sales s
 		JOIN "assignment".customers c 
 			ON s.customer_id = c.customer_id 
-	GROUP BY c.customer_id, s.sale_id)
-WHERE tiles = 1,	
+	GROUP BY c.customer_id) AS ranked
+WHERE tiles = 1;	
 
 -- 92. Which products contribute to the top 50% of total revenue?
 SELECT product_name
 FROM 
-	(SELECT *, NTILE(2) OVER(ORDER BY SUM(s.total_amount) DESC) AS tiles
+	(SELECT NTILE(2) OVER(ORDER BY SUM(s.total_amount) DESC) AS tiles
 	FROM "assignment".sales s
 		JOIN "assignment".products p
 			ON s.product_id  = p.product_id 
-	GROUP BY p.product_id, s.sale_id)
+	GROUP BY p.product_id) AS ranked
 WHERE tiles = 1;	
 
 -- 93. Which customers made purchases in consecutive months?
@@ -1038,15 +1038,15 @@ WHERE following_month = MONTH + INTERVAL '1 month';
 
 -- 94. Which products experienced the largest difference between stock quantity and total quantity sold?
 SELECT product_name
-FROM
-	(SELECT p.product_name, NTILE(10) OVER(ORDER BY (SUM(p.stock_quantity) - SUM(s.quantity_sold))) AS tile
-	FROM products p
-		JOIN sales s
-			ON p.product_id = s.product_id
-	GROUP BY p.product_id)
-WHERE tile = 1 
-	OR tile = 2 
-	OR tile = 3;
+FROM (
+    SELECT 
+        p.product_name, 
+        NTILE(10) OVER(ORDER BY (p.stock_quantity - SUM(s.quantity_sold)) DESC) AS tile
+    FROM assignment.products p
+    JOIN assignment.sales s ON p.product_id = s.product_id
+    GROUP BY p.product_id, p.product_name, p.stock_quantity
+) subquery
+WHERE tile IN (1, 2, 3);
 
 -- 95. Which customers have spending above the average spending of their membership tier?
 (SELECT CONCAT(c.first_name, ' ' , c.last_name) AS full_name, c.membership_status 
