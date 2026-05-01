@@ -10,6 +10,8 @@ sql_alchemy_conn = my_conn_string
 ```
 Replace 'my_conn_string' with your preferred database's connection string. Ensure the database and user exist in the database.
 
+---
+
 ## 2. Remove test dags
 Find:
 ```
@@ -17,6 +19,8 @@ Find:
 load_examples = True
 ```
 Replace `True` with `False`.
+
+---
 
 ## 3. Postgres Configuration
 If you're using postgres, navigate to `/etc/postgresql/[version]/main/pg_hba.conf` and add the following at the bottom:
