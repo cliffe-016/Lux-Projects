@@ -1,6 +1,44 @@
-# Setting up Airflow 3.0+ for production
+# Setting up Airflow 3.0+
+How to set up and install apache airflow 3.*
 
-After installation and main directory setup:
+## 1. Create Airflow directory 
+```
+# Create directory
+mkdir -p ~/airflow
+# Move to directory
+cd ~/airflow
+```
+### Create virtual environment
+```
+# Create virtual environemnt
+python3 -m venv airflow_venv
+# Activate virtual environment
+source airflow_venv/bin/activate
+```
+---
+
+## 2. Install  Airflow
+```
+pip install "apache-airflow=={AIRFLOW VERSION}" --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-{AIRFLOW VERSION}/constraints-{PYTHON VERSION}.txt"
+```
+
+---
+
+## 3. Set Airflow working directory
+```
+export AIRFLOW_HOME=~/airflow
+# Confirm installation
+airflow version 
+```
+
+## 4. Initialize Airflow
+```
+airflow standalone
+```
+
+---
+**Note: `airflow standalone` is only used in devolopment, to initialze a production instance, follow the steps below
+---
 
 ## 1. Database Configuration
 Navigate to `~/airflow/airflow.cfg` and find:
@@ -220,6 +258,18 @@ For real deployment:
 ---
 
 ## Final Checklist
+
+To install Airflow 3.x:
+
+✔ Create an airflow folder in the root directory
+
+✔ Move to the directory and activate virtual environment
+
+✔ Install Airflow
+
+✔ Set Home directory
+
+✔ Run Airflow
 
 To initialize Airflow 3.x in production:
 
