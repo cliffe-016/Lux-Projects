@@ -37,7 +37,7 @@ airflow standalone
 ```
 
 ---
-**Note: `airflow standalone` is only used in devolopment, to initialze a production instance, follow the steps below
+**Note: `airflow standalone` is only used in devolopment, to initialze a production instance, follow the steps below**
 ---
 
 ## 1. Database Configuration
