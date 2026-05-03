@@ -362,52 +362,192 @@ FROM billing b
 -- LEFT JOINS
 
 -- Q27 Produce a list of all patients and indicate whether they have had an appointment.
+SELECT concat(p.first_name, ' ', p.last_name) AS patient, CASE WHEN a.appointment_id IS NOT NULL THEN 'Yes' ELSE 'No' END AS has_appointment
+FROM patient p
+	LEFT JOIN appointment a
+		ON p.patient_key = a.patient_key;
 
 -- Q28 Display all doctors and show the appointments they have handled, including those with none.
--- Q29 Show every department and any appointments associated with them.
--- Q30 Display all patients and their billing information, including patients who have never been billed.
+SELECT concat(d.first_name, ' ', d.last_name) AS doctor, a.appointment_id AS appointment_handled
+FROM doctor d
+	LEFT JOIN appointment a
+		ON d.doctor_key = a.doctor_key;
 
+-- Q29 Show every department and any appointments associated with them.
+SELECT d.department_name, a.appointment_id AS appointment_handled
+FROM department d
+	LEFT JOIN appointment a
+		ON d.department_key = a.department_key;
+
+-- Q30 Display all patients and their billing information, including patients who have never been billed.
+SELECT concat(p.first_name, ' ', p.last_name) AS patient, b.*
+FROM patient p
+	LEFT JOIN billing b
+		ON p.patient_key = b.patient_key;
 
 -- CASE
 
 -- Q31 Categorize bills into payment groups such as fully paid, partially paid, or unpaid.
+SELECT 
+	CASE 
+		WHEN bill_status = 'Paid' THEN 'Fully Paid'
+		WHEN bill_status = 'Unpaid' THEN 'Unpaid'
+		ELSE 'Partially Paid'
+	END AS payment_group
+FROM billing;	
+	
 -- Q32 Create a category showing whether a patient is considered young, middle-aged, or senior based on age.
+SELECT CASE 
+			WHEN age < 30 THEN 'young'
+			WHEN age > 50 THEN 'senior'
+			ELSE 'middle-aged'
+		END AS age_category
+FROM patient;
+
 -- Q33 Classify admissions into short stay or long stay depending on the length of stay.
+SELECT CASE
+		WHEN length_of_stay <= 3 THEN 'short stay'
+		ELSE 'long stay'
+	END AS length_of_stay
+FROM admission;
+
 -- Q34 Create a category that flags appointments as successful or unsuccessful based on their status.
+SELECT CASE 
+		WHEN appointment_status = 'Completed' THEN 'successful'
+		ELSE 'unsuccessful'
+	END AS appointment_status
+FROM appointment;
 
 
 -- ALIASES AND CALCULATED COLUMNS
 
 -- Q35 Display patient names as a single column combining first and last name.
+SELECT concat(first_name, ' ', last_name) AS patient_name
+FROM patient;
+
 -- Q36 Create a column showing the total bill amount still owed for each billing record.
+SELECT (total_amount - paid_amount) AS amount_owed
+FROM billing;
+
 -- Q37 Calculate the percentage of each bill that has been paid.
+SELECT (paid_amount/total_amount) * 100 AS pct_paid
+FROM billing;
+
 -- Q38 Display the length of stay for each admission calculated from the admission and discharge dates.
+SELECT discharge_date::date - admission_date::date  AS length_of_stay
+FROM admission;
 
 
 -- SUBQUERIES
 
 -- Q39 Find patients who are older than the average age of all patients.
--- Q40 Identify the doctor who handled the highest number of appointments.
--- Q41 Find the patient responsible for the highest bill in the system.
--- Q42 Identify patients who have at least one admission recorded.
--- Q43 Determine departments whose billing totals are above the hospital average.
+SELECT concat(first_name, ' ', last_name) AS patient_name
+FROM patient
+WHERE age > (SELECT avg(age) FROM patient);
 
+-- Q40 Identify the doctor who handled the highest number of appointments.
+SELECT concat(d.first_name, ' ', d.last_name) AS doctor_name
+FROM doctor d
+	JOIN (SELECT doctor_key, count(appointment_key) AS no_appointment FROM appointment GROUP BY doctor_key ORDER BY count(appointment_key) desc) a
+		ON d.doctor_key = a.doctor_key
+ORDER BY no_appointment DESC
+LIMIT 1;
+		
+-- Q41 Find the patient responsible for the highest bill in the system.
+SELECT concat(p.first_name, ' ', p.last_name) AS patient_name
+FROM patient p
+	JOIN (SELECT patient_key, sum(total_amount) AS total_bill FROM billing GROUP BY patient_key ORDER BY sum(total_amount) desc) b
+		ON b.patient_key = b.patient_key
+ORDER BY total_bill DESC
+LIMIT 1;
+
+-- Q42 Identify patients who have at least one admission recorded.
+SELECT concat(p.first_name, ' ', p.last_name) AS patient_name
+FROM patient p
+	JOIN (SELECT patient_key, count(admission_key) AS no_admissions FROM admission GROUP BY patient_key) a
+		ON p.patient_key = a.patient_key
+WHERE no_admissions >= 1;	
+
+-- Q43 Determine departments whose billing totals are above the hospital average.
+SELECT department_name
+FROM (
+SELECT d.department_name, sum(b.total_amount)
+FROM department d
+	JOIN billing b	
+		ON d.department_key = b.department_key
+GROUP BY d.department_name
+HAVING sum(b.total_amount) > (SELECT avg(total_amount) FROM billing)
+);
 
 -- CTES
 
 -- Q44 Calculate total billing per department and determine which department generates the most revenue.
--- Q45 Calculate total appointments handled by each doctor and determine the top three doctors.
--- Q46 Compute the total payments received from each patient and list them in descending order.
+WITH revenue_department as(
+SELECT d.department_name, sum(b.total_amount) AS total_revenue
+FROM department d
+	JOIN billing b
+		ON d.department_key = b.department_key
+GROUP BY d.department_name)
+SELECT department_name
+FROM revenue_department
+ORDER BY total_revenue DESC LIMIT 1;
 
+-- Q45 Calculate total appointments handled by each doctor and determine the top three doctors.
+WITH appointment_dr AS (
+SELECT concat(d.first_name, ' ', d.last_name) AS doctor_name, count(appointment_key) AS no_appointment
+FROM doctor d
+	JOIN appointment a
+		ON d.doctor_key = a.appointment_key
+GROUP BY d.doctor_key) 	
+SELECT doctor_name
+FROM appointment_dr
+ORDER BY no_appointment DESC limit 1;
+
+-- Q46 Compute the total payments received from each patient and list them in descending order.
+WITH total_payments AS(
+SELECT concat(p.first_name, ' ', p.last_name) AS patient_name, sum(b.paid_amount) AS total_paid
+FROM patient p
+	JOIN billing b
+		ON p.patient_key = b.patient_key
+GROUP BY p.patient_key)
+SELECT patient_name, total_paid
+FROM total_payments
+ORDER BY total_paid DESC;
 
 -- WINDOW FUNCTIONS
 
 -- Q47 Rank all doctors based on the number of appointments they have handled.
--- Q48 Rank departments based on the revenue they have generated.
--- Q49 Assign a rank to patients based on the total billing amount associated with them.
--- Q50 Determine how each bill compares to the average bill amount.
--- Q51 Display a running total of revenue collected over time based on bill dates.
+SELECT concat(d.first_name, ' ', d.last_name) AS doctor_name,
+	RANK() over(ORDER BY count(a.appointment_key) DESC) AS RANK
+FROM doctor d
+	JOIN appointment a
+		ON d.doctor_key = a.doctor_key
+GROUP BY d.doctor_key;
 
+-- Q48 Rank departments based on the revenue they have generated.
+SELECT d.department_name,
+	rank() over(ORDER BY sum(b.total_amount) desc) AS RANK
+FROM department d
+	JOIN billing b
+		ON d.department_key = b.department_key
+GROUP BY d.department_key;
+
+-- Q49 Assign a rank to patients based on the total billing amount associated with them.
+SELECT concat(p.first_name, ' ', p.last_name) AS patient_name,
+	RANK() over(ORDER BY sum(b.total_amount) DESC) AS RANK
+FROM patient p
+	JOIN billing b
+		ON p.patient_key = b.patient_key
+GROUP BY p.patient_key;
+
+-- Q50 Determine how each bill compares to the average bill amount.
+SELECT total_amount,
+	avg(total_amount) OVER () AS average
+FROM billing;
+
+-- Q51 Display a running total of revenue collected over time based on bill dates.
+SELECT sum(paid_amount) OVER (ORDER BY bill_date desc) AS running_revenue
+FROM billing;
 
 -- STORED PROCEDURES OR FUNCTIONS
 
