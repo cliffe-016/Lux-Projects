@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def extract_weather():
-    # Define api endpoint
-    url = os.get_env("url")
+# Define api endpoint
+url = os.getenv("url")
 
+def extract_weather():
     # Access the API and check response
     raw_data = requests.get(url)
 
