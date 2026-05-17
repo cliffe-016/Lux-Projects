@@ -2,6 +2,12 @@ import requests
 from kafka import KafkaProducer 
 import json
 import time
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+url = os.getenv('url')
 
 producer = KafkaProducer(
     bootstrap_servers='localhost:9092',
@@ -11,7 +17,6 @@ topic = 'weather-info'
 
 def extract():
     # Extract data from api 
-    url="https://api.openweathermap.org/data/2.5/weather?lat=-1.2921&lon=36.8219&appid=c84569ede6e5f4688e4e8fc032ab4e6f"
     response = requests.get(url)
 
     # Convert to json
