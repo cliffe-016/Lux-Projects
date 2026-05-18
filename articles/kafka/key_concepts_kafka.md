@@ -5,8 +5,20 @@ It acts as a massive central nervous system, allowing data to flow continuously 
 To understand how Kafka works, I'll break down its core concepts using a live streaming project: 
 [a pipeline that extracts real-time weather data from the OpenWeatherMap API and streams it directly into a Cassandra database.](https://github.com/Cliffe16/Lux_Assignments/tree/main/Kafka/open_weather_streaming)
 
+## Brokers and Clusters 
+Kafka does not run on a single machine, it is a **distributed system**.
+
+A **Broker** is a single Kafka server responsible for receiving, storing and serving messages.
+
+A **Cluster** is a group of brokers working together. If one broker fails, the cluster ensures the data is replicated and safe elsewhere.
+
+In the project's code, you can see the connection to the broker defined via the `bootstrap_servers` parameter pointing to `localhost:9092`.
+
+## Events
+In Kafka, an event (also record or message) records the fact that 'something happened.' They consist of a key, value, timestamp and headers and cannot be updated or changed (immutable). In the streaming pipeline, this is the json response extracted from the weather api.
+
 ## Topic
-Whearas in a database, you insert data into a **table**, in Kafka, you push data to a **topic.** In the weather pipeline, the topic is simply as:
+Wheareas in a database, you insert data into a **table**, in Kafka, you push data to a **topic.** In the weather pipeline, the topic is simply as:
 ```Python
 topic = 'weather_info'
 ```
@@ -14,6 +26,7 @@ Every API response pulled for Nairobi's current weather conditions will be publi
 ```Python
 producer.send(topic, {api_response})
 ```
+To ensure the system can scale horizontally and process millions of messages simultaneously, topics are split into **Partitions**. They allow multiple consumers to read from the same topic in parallel. Within each partition, messages are strictly ordered and assigned a unique sequential ID known as an **Offset**. The offset allows consumers to track exactly where they left off in reading the stream, ensuring no data is skipped or read twice.
 
 ## Producer
 A producer is any application that publishes data to a Kafka topic. Their only job is to gather data and push it to the broker. For this project, `producer.py` acts as the producer, it requests data from the weather api, receives a json payload, and sends it to the topic every 5 seconds.
