@@ -65,6 +65,8 @@ The consumer will connect to Cassandra, auto-generate the keyspace `weather_info
 ```Bash
 python3 consumer.py
 ```
+Screenshot:
+![consumer screenshot](screenshots/consumer.png)
 
 ### Step 2: Run the Producer
 In a separate terminal session, run the producer script to start feeding data into Kafka:
@@ -72,6 +74,7 @@ In a separate terminal session, run the producer script to start feeding data in
 ```Bash
 python3 producer.py
 ```
+![producer screenshot](screenshots/producer.png)
 
 ### Step 3: Query Data
 To inspect the data loaded into the database, use the `cqlsh` cli tool inside your environment:
