@@ -14,7 +14,7 @@ This project extracts live weather data from the OpenWeather API, streams it via
 ## Prerequisites
 Ensure you have the following services and environments configured on your machine:
 
-* **Java Runtime:** OpenJDK 11
+* **Java Runtime:** OpenJDK 11 for Cassandra and OpenJDK 21 for Kafka
 
 * **Python:** Version 3.10 to 3.12 
 
