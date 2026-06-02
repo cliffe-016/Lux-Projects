@@ -2,12 +2,24 @@ from pyspark.sql import Window
 import pyspark.sql.functions as F
 
 def clean_items(df):
-    """Drops duplicate items and removes rows with no order_id."""
-    return df.dropDuplicates(['item_id']).filter(F.col("order_id").isNotNull())
+    """Drops duplicate items and removes rows with no order_id"""
+    df = df.dropDuplicates(['item_id']).filter(F.col("order_id").isNotNull()) \
+        .withColumn("quantity", F.col("quantity").cast("int")) \
+        .withColumn("unit_price", F.col("unit_price").cast("double"))
+
+    return df
 
 def clean_orders(df):
-    """Drops duplicate orders and removes rows with no order_id."""
-    return df.dropDuplicates(['order_id']).filter(F.col("order_id").isNotNull())
+    """Drops duplicate orders and removes rows with no order_id"""
+    df = df.dropDuplicates(['order_id']).filter(F.col("order_id").isNotNull()) \
+        .withColumn("total_amount", F.col("total_amount").cast("double")) \
+        .withColumn("discount_pct", F.col("discount_pct").cast("double"))
+
+    return df
+
+def clean_returns(df):
+    """Casts the refund amount to a double"""
+    return df.withColumn("refund_amount", F.col("refund_amount").cast("double"))
 
 def clean_customers(df):
     """Cleans the data"""
