@@ -1,6 +1,14 @@
 from pyspark.sql import Window
 import pyspark.sql.functions as F
 
+def clean_items(df):
+    """Drops duplicate items and removes rows with no order_id."""
+    return df.dropDuplicates(['item_id']).filter(F.col("order_id").isNotNull())
+
+def clean_orders(df):
+    """Drops duplicate orders and removes rows with no order_id."""
+    return df.dropDuplicates(['order_id']).filter(F.col("order_id").isNotNull())
+
 def clean_customers(df):
     """Cleans the data"""
     df = df.filter(
