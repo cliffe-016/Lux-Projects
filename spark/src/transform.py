@@ -5,7 +5,14 @@ def clean_items(df):
     """Drops duplicate items and removes rows with no order_id"""
     df = df.dropDuplicates(['item_id']).filter(F.col("order_id").isNotNull()) \
         .withColumn("quantity", F.col("quantity").cast("int")) \
-        .withColumn("unit_price", F.col("unit_price").cast("double"))
+        .withColumn("unit_price", F.col("unit_price").cast("double")) \
+        .withColumn("order_date",
+        F.coalesce(
+            F.expr("try_to_date(order_date, 'yyyy-MM-dd')"),
+            F.expr("try_to_date(order_date, 'dd/MM/yyyy')"),
+            F.expr("try_to_date(order_date, 'MM/dd/yyyy')")
+        )
+    )
 
     return df
 
@@ -13,7 +20,14 @@ def clean_orders(df):
     """Drops duplicate orders and removes rows with no order_id"""
     df = df.dropDuplicates(['order_id']).filter(F.col("order_id").isNotNull()) \
         .withColumn("total_amount", F.col("total_amount").cast("double")) \
-        .withColumn("discount_pct", F.col("discount_pct").cast("double"))
+        .withColumn("discount_pct", F.col("discount_pct").cast("double")) \
+        .withColumn("return_date",
+        F.coalesce(
+            F.expr("try_to_date(return_date, 'yyyy-MM-dd')"),
+            F.expr("try_to_date(return_date, 'dd/MM/yyyy')"),
+            F.expr("try_to_date(return_date, 'MM/dd/yyyy')")
+        )
+    )
 
     return df
 
