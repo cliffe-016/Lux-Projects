@@ -1,5 +1,5 @@
 from spark_utils import spark_session
-from transform import clean_orders, clean_items, clean_customers, enrich_orders, window_metrics, enrich_returns
+from transform import clean_orders, clean_items, clean_returns, clean_customers, enrich_orders, window_metrics, enrich_returns
 import config as config
 
 def main():
@@ -18,13 +18,14 @@ def main():
     customers_clean = clean_customers(customers_raw)
     items_clean = clean_items(items_raw)
     orders_clean = clean_orders(orders_raw)
+    returns_clean = clean_returns(returns_raw)
 
     # Enrich the data
     enriched_df = enrich_orders(customers_clean, orders_clean, items_clean)
     enriched_df = window_metrics(enriched_df)
 
     # Extract the dictionary of dataframes from the returns function
-    returns_results = enrich_returns(enriched_df, returns_raw)
+    returns_results = enrich_returns(enriched_df, returns_clean)
     final_enriched_df = returns_results["final_enriched_df"]
     return_rates_df = returns_results["return_rates"]
     top_10_refunds_df = returns_results["top_10_refunds"]
