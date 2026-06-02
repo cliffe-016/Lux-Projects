@@ -5,7 +5,7 @@ import config as config
 def main():
     # Initialize Spark Session
     print("Starting E-commerce Pipeline...")
-    spark = get_spark_session()
+    spark = spark_session()
 
     # Read raw data
     customers_raw = spark.read.csv(config.customers, header=True)
