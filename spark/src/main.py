@@ -1,4 +1,4 @@
-from spark_utils import get_spark_session
+from spark_utils import spark_session
 from transforms import clean_orders, clean_items, clean_customers, enrich_orders, window_metrics, enrich_returns
 import config as config
 
